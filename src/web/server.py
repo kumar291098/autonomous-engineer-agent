@@ -101,9 +101,9 @@ def start_copilot_web_server(port: int = 5000):
     url = f"http://localhost:{port}"
 
     print(f"\n=======================================================")
-    print(f"🚀 AGENT COPILOT CHAT & VALIDATION WEB DASHBOARD ACTIVE")
+    print(f"[WEB] AGENT COPILOT CHAT & VALIDATION WEB DASHBOARD ACTIVE")
     print(f"=======================================================")
-    print(f"🌐 Access Dashboard at: {url}")
+    print(f"[WEB] Access Dashboard at: {url}")
     print(f"Press Ctrl+C to stop the server.\n")
 
     webbrowser.open(url)
