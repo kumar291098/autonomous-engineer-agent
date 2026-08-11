@@ -21,6 +21,7 @@ def parse_args():
     parser.add_argument("--issue-title", type=str, default="Calculation Return Value Bug", help="Title of bug ticket")
     parser.add_argument("--issue-desc", type=str, default="The calculate function returns x - 1 instead of x + 1", help="Bug description")
     parser.add_argument("--stack-trace", type=str, default="", help="Optional stack trace")
+    parser.add_argument("--run-app", action="store_true", help="Auto-start local Spring Boot & React servers after generation")
     parser.add_argument("--export-zip", type=str, default=None, help="Optional zip filepath to package standalone generated app e.g., ./app.zip")
     parser.add_argument("--provider", type=str, default="mock", choices=["gemini", "openai", "mock"], help="LLM Provider")
     parser.add_argument("--max-retries", type=int, default=3, help="Max validation retries")
@@ -75,6 +76,9 @@ def main():
             want_zip = input("Export as Zip archive? (y/n, default n): ").strip().lower()
             if want_zip == "y":
                 args.export_zip = f"{args.repo}.zip"
+            want_run = input("Auto-start Spring Boot backend & React UI local dev servers? (y/n, default y): ").strip().lower() or "y"
+            if want_run == "y":
+                args.run_app = True
         else:
             args.mode = "bugfix"
             args.issue_title = input("\n💬 Enter Bug Title: ").strip() or "General Codebase Bug"
@@ -93,7 +97,7 @@ def main():
             target_dir=str(repo_path),
             llm_client=llm_client,
         )
-        result = fullstack_orchestrator.generate_fullstack_app()
+        result = fullstack_orchestrator.generate_fullstack_app(run_app=args.run_app)
 
         if args.export_zip:
             zip_file = fullstack_orchestrator.export_as_zip(args.export_zip)

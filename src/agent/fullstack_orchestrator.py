@@ -18,6 +18,9 @@ from src.runner.react_scaffolder import ReactScaffolder
 from src.agent.llm_client import LLMClient
 
 
+from src.runner.app_launcher import AppLauncher
+
+
 class FullStackOrchestrator:
     """Orchestrates natural language feature requirements into Java Spring Boot + React + Test suites."""
 
@@ -34,7 +37,7 @@ class FullStackOrchestrator:
         self.backend_scaffolder = SpringBootScaffolder(str(self.target_dir))
         self.frontend_scaffolder = ReactScaffolder(str(self.target_dir))
 
-    def generate_fullstack_app(self) -> Dict[str, Any]:
+    def generate_fullstack_app(self, run_app: bool = False) -> Dict[str, Any]:
         """Executes full-stack generation lifecycle."""
         print(f"\n=======================================================")
         print(f"[START] Full-Stack Java Spring Boot & React Generation")
@@ -91,6 +94,10 @@ class FullStackOrchestrator:
         print(f"   Frontend Path: {self.frontend_scaffolder.target_dir}")
 
         self._print_generated_files_tree(sb_paths + react_paths)
+
+        if run_app:
+            launcher = AppLauncher(str(self.target_dir))
+            launcher.launch_local_servers()
 
         return {
             "status": "SUCCESS",
