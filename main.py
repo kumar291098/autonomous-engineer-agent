@@ -126,6 +126,14 @@ def main():
             args.issue_desc = input("💬 Enter Bug Description: ").strip() or "Code calculation error"
             args.repo = input("Enter target repository folder (default: ./demo_repo): ").strip() or "./demo_repo"
 
+    if args.mode == "fullstack" and (args.repo == "./output_app" or args.repo == "./demo_repo"):
+        feature_slug = re.sub(r'[^a-zA-Z0-9]+', '_', args.feature.lower()).strip('_')
+        if not feature_slug:
+            feature_slug = "generated_app"
+        elif len(feature_slug) > 25:
+            feature_slug = feature_slug[:25].rstrip('_')
+        args.repo = f"./apps/{feature_slug}"
+
     repo_path = Path(args.repo).resolve()
     if not repo_path.exists():
         repo_path.mkdir(parents=True, exist_ok=True)
