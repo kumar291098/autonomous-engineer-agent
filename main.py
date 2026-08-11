@@ -32,7 +32,19 @@ def parse_args():
     return parser.parse_args()
 
 
+def load_env_file():
+    """Loads environment variables from a .env file if present in workspace root."""
+    env_path = Path(__file__).parent / ".env"
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+
 def main():
+    load_env_file()
     args = parse_args()
 
     if args.web:
