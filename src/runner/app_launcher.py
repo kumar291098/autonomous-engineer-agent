@@ -57,13 +57,23 @@ class AppLauncher:
                 print("   ⚠️ NPM (npm) not found in system PATH. Cannot auto-start React UI frontend.")
                 logs.append("NPM not found in PATH.")
 
-        # 3. Open Browser
-        print("\n🌐 Opening Local Application URLs in Default Browser...")
-        time.sleep(2)
-        try:
-            webbrowser.open("http://localhost:8080")
-            webbrowser.open("http://localhost:3000")
-        except Exception as ex:
-            print(f"   Note: Could not auto-open browser: {ex}")
+        # 3. Open Browser or Fallback to Copilot Web Dashboard
+        if backend_proc or frontend_proc:
+            print("\n🌐 Opening Local Application URLs in Default Browser...")
+            time.sleep(2)
+            try:
+                if backend_proc:
+                    webbrowser.open("http://localhost:8080")
+                if frontend_proc:
+                    webbrowser.open("http://localhost:3000")
+            except Exception as ex:
+                print(f"   Note: Could not auto-open browser: {ex}")
+        else:
+            print("\n🌐 Maven/NPM not found in system PATH. Launching Agent Copilot Web Dashboard UI at http://localhost:5000...")
+            try:
+                from src.web.server import start_copilot_web_server
+                start_copilot_web_server(port=5000)
+            except Exception as ex:
+                print(f"   Note: Could not launch Copilot Web Dashboard: {ex}")
 
         return True, "\n".join(logs)

@@ -93,7 +93,14 @@ def main():
                 if line:
                     lines.append(line)
             if lines:
-                args.feature = "\n".join(lines)
+                raw_prompt = "\n".join(lines)
+                # Strip accidental CLI flags if user pasted a CLI command string into interactive prompt
+                if "--feature" in raw_prompt:
+                    import re
+                    match = re.search(r'--feature\s+["\']?([^"\']+)["\']?', raw_prompt)
+                    if match:
+                        raw_prompt = match.group(1)
+                args.feature = raw_prompt
             args.repo = input("\nEnter output project directory (default: ./output_app): ").strip() or "./output_app"
             want_zip = input("Export as Zip archive? (y/n, default n): ").strip().lower()
             if want_zip == "y":
