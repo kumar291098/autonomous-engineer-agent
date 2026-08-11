@@ -26,7 +26,8 @@ def parse_args():
     parser.add_argument("--issue-title", type=str, default="Calculation Return Value Bug", help="Title of bug ticket")
     parser.add_argument("--issue-desc", type=str, default="The calculate function returns x - 1 instead of x + 1", help="Bug description")
     parser.add_argument("--stack-trace", type=str, default="", help="Optional stack trace")
-    parser.add_argument("--run-app", action="store_true", help="Auto-start local Spring Boot & React servers after generation")
+    parser.add_argument("--run-app", action="store_true", default=True, help="Auto-start local Spring Boot & React servers after generation (Default: True)")
+    parser.add_argument("--no-run-app", action="store_true", help="Disable auto-starting local servers after generation")
     parser.add_argument("--export-zip", type=str, default=None, help="Optional zip filepath to package standalone generated app e.g., ./app.zip")
     parser.add_argument("--provider", type=str, default="mock", choices=["gemini", "openai", "mock"], help="LLM Provider")
     parser.add_argument("--max-retries", type=int, default=3, help="Max validation retries")
@@ -109,7 +110,6 @@ def main():
                 raw_prompt = "\n".join(lines)
                 # Strip accidental CLI flags if user pasted a CLI command string into interactive prompt
                 if "--feature" in raw_prompt:
-                    import re
                     match = re.search(r'--feature\s+["\']?([^"\']+)["\']?', raw_prompt)
                     if match:
                         raw_prompt = match.group(1)
@@ -147,7 +147,8 @@ def main():
             target_dir=str(repo_path),
             llm_client=llm_client,
         )
-        result = fullstack_orchestrator.generate_fullstack_app(run_app=args.run_app)
+        should_run = not args.no_run_app
+        result = fullstack_orchestrator.generate_fullstack_app(run_app=should_run)
 
         if args.export_zip:
             zip_file = fullstack_orchestrator.export_as_zip(args.export_zip)
