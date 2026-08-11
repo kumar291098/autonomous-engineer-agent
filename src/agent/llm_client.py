@@ -160,22 +160,24 @@ class LLMClient:
 
     def _extract_clean_title(self, prompt: str) -> str:
         """Dynamically extracts clean feature title from user requirement in prompt."""
-        req_match = re.search(r'(?:REQUIREMENT|FEATURE REQUIREMENT|FEATURE):\s*["\']?([^"\']+)["\']?', prompt, re.I)
+        req_match = re.search(r'REQUIREMENT:\s*["\']?([^"\']+)["\']?', prompt, re.IGNORECASE)
         if req_match:
-            raw = req_match.group(1).strip().split("\n")[0]
+            raw = req_match.group(1).strip().splitlines()[0]
         else:
-            lines = [l.strip() for l in prompt.splitlines() if l.strip()]
-            raw = lines[-1] if lines else prompt
+            lines = [l.strip() for l in prompt.splitlines() if l.strip() and not l.strip().startswith(('1.', '2.', '3.', '4.', '5.', 'You are', 'Return', 'Strict'))]
+            raw = lines[-1] if lines else "Application Portal"
         
-        cleaned = re.sub(r'^(Create|Build|Make|Generate|Develop)\s+(a|an)?\s*', '', raw, flags=re.I).strip()
-        cleaned = re.sub(r'^[a-zA-Z]\s+', '', cleaned).strip()
+        cleaned = re.sub(r'^(Create|Build|Make|Generate|Develop)\s+(a|an)?\s*', '', raw, flags=re.IGNORECASE).strip()
         cleaned = re.sub(r'[^\w\s]', ' ', cleaned).strip()
-        if not cleaned:
-            return "Application Portal"
+        
         words = [w for w in cleaned.split() if len(w) > 1 or w.isdigit()]
-        if len(words) > 4:
-            words = words[:4]
-        return " ".join(w.capitalize() for w in words) if words else "Application Portal"
+        words = [w for w in words if w.lower() not in ['strict', 'output', 'return', 'system', 'format', 'schema', 'identity']]
+        
+        if not words:
+            return "Application Portal"
+        if len(words) > 5:
+            words = words[:5]
+        return " ".join(w.capitalize() for w in words)
 
     def _generate_mock_output(self, prompt: str, schema_cls: Type[T]) -> T:
         """Mock fallback for offline validation and demo testing."""
