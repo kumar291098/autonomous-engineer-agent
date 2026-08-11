@@ -158,6 +158,25 @@ class LLMClient:
         data = json.loads(cleaned)
         return schema_cls.model_validate(data)
 
+    def _extract_clean_title(self, prompt: str) -> str:
+        """Dynamically extracts clean feature title from user requirement in prompt."""
+        req_match = re.search(r'(?:REQUIREMENT|FEATURE REQUIREMENT|FEATURE):\s*["\']?([^"\']+)["\']?', prompt, re.I)
+        if req_match:
+            raw = req_match.group(1).strip().split("\n")[0]
+        else:
+            lines = [l.strip() for l in prompt.splitlines() if l.strip()]
+            raw = lines[-1] if lines else prompt
+        
+        cleaned = re.sub(r'^(Create|Build|Make|Generate|Develop)\s+(a|an)?\s*', '', raw, flags=re.I).strip()
+        cleaned = re.sub(r'^[a-zA-Z]\s+', '', cleaned).strip()
+        cleaned = re.sub(r'[^\w\s]', ' ', cleaned).strip()
+        if not cleaned:
+            return "Application Portal"
+        words = [w for w in cleaned.split() if len(w) > 1 or w.isdigit()]
+        if len(words) > 4:
+            words = words[:4]
+        return " ".join(w.capitalize() for w in words) if words else "Application Portal"
+
     def _generate_mock_output(self, prompt: str, schema_cls: Type[T]) -> T:
         """Mock fallback for offline validation and demo testing."""
         from src.schemas.models import (
@@ -235,12 +254,14 @@ class LLMClient:
                     ui_views=["TaskList", "TaskCreateForm", "CategoryFilter"],
                 )
             else:
+                clean_title = self._extract_clean_title(prompt)
+                first_word = re.sub(r'[^a-zA-Z]', '', clean_title.split()[0]) if clean_title.split() else "App"
                 return FeatureSpecification(
-                    feature_title="Order Management System",
-                    summary="Full-stack Food Delivery Order Management System with Java Spring Boot REST API and React Dashboard UI.",
-                    entities=["Order", "OrderItem", "Customer"],
-                    api_endpoints=["GET /api/orders", "POST /api/orders", "GET /api/orders/{id}"],
-                    ui_views=["OrderDashboard", "CreateOrderForm", "OrderDetailModal"],
+                    feature_title=clean_title,
+                    summary=f"Full-stack {clean_title} with Java Spring Boot REST API and React UI Dashboard.",
+                    entities=[f"{first_word}Record", "UserAccount", "AuditLog"],
+                    api_endpoints=[f"GET /api/{first_word.lower()}", f"POST /api/{first_word.lower()}", f"GET /api/{first_word.lower()}/{{id}}"],
+                    ui_views=[f"{first_word}Dashboard", "CreateForm", "DetailModal"],
                 )
         elif schema_cls == SpringBootArtifacts:
             if is_snake:
@@ -493,14 +514,19 @@ public class CalculatorControllerTest {
                     ],
                 )
             else:
-                pom_content = """<?xml version="1.0" encoding="UTF-8"?>
+                clean_title = self._extract_clean_title(prompt)
+                first_word = re.sub(r'[^a-zA-Z]', '', clean_title.split()[0]) if clean_title.split() else "App"
+                pkg_name = first_word.lower() if first_word else "app"
+                controller_name = f"{first_word.capitalize()}Controller"
+                
+                pom_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.foodapp</groupId>
-  <artifactId>order-service</artifactId>
+  <groupId>com.app</groupId>
+  <artifactId>{pkg_name}-service</artifactId>
   <version>1.0.0</version>
-  <name>order-service</name>
+  <name>{pkg_name}-service</name>
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
@@ -516,16 +542,6 @@ public class CalculatorControllerTest {
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
@@ -533,71 +549,54 @@ public class CalculatorControllerTest {
   </dependencies>
 </project>
 """
-                controller_code = """package com.foodapp.orderservice.controller;
+                controller_code = f"""package com.app.{pkg_name}.controller;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/{pkg_name}")
 @CrossOrigin(origins = "*")
-public class OrderController {
+public class {controller_name} {{
 
     @GetMapping
-    public List<Map<String, Object>> getAllOrders() {
+    public List<Map<String, Object>> getRecords() {{
         return List.of(
-            Map.of("id", 1, "customer", "John Doe", "amount", 29.99, "status", "DELIVERED"),
-            Map.of("id", 2, "customer", "Jane Smith", "amount", 45.50, "status", "PREPARING")
+            Map.of("id", 1, "title", "{clean_title} Primary Record", "status", "ACTIVE"),
+            Map.of("id", 2, "title", "{clean_title} Secondary Record", "status", "PENDING")
         );
-    }
+    }}
 
     @PostMapping
-    public Map<str, Object> createOrder(@RequestBody Map<str, Object> order) {
-        return Map.of("id", 3, "customer", order.getOrDefault("customer", "Guest"), "status", "CREATED");
-    }
-}
+    public Map<String, Object> createRecord(@RequestBody Map<String, Object> payload) {{
+        return Map.of("id", 3, "title", payload.getOrDefault("title", "New Entry"), "status", "CREATED");
+    }}
+}}
 """
-            test_code = """package com.foodapp.orderservice.controller;
+                test_code = f"""package com.app.{pkg_name}.controller;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.web.servlet.MockMvc;
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@WebMvcTest(OrderController.class)
-public class OrderControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+public class {controller_name}Test {{
     @Test
-    public void testGetAllOrders() throws Exception {
-        mockMvc.perform(get("/api/orders"))
-               .andExpect(status().isOk());
-    }
-}
+    public void testGetRecords() {{
+        {controller_name} controller = new {controller_name}();
+        var res = controller.getRecords();
+        assertEquals(2, res.size());
+    }}
+}}
 """
-            return SpringBootArtifacts(
-                pom_xml=CodeFile(file_path="pom.xml", content=pom_content, description="Maven configuration"),
-                java_files=[
-                    CodeFile(
-                        file_path="src/main/java/com/foodapp/orderservice/controller/OrderController.java",
-                        content=controller_code,
-                        description="REST Controller for Orders",
-                    )
-                ],
-                test_files=[
-                    CodeFile(
-                        file_path="src/test/java/com/foodapp/orderservice/controller/OrderControllerTest.java",
-                        content=test_code,
-                        description="JUnit 5 Test for Order Controller",
-                    )
-                ],
-            )
+                return SpringBootArtifacts(
+                    pom_xml=CodeFile(file_path="pom.xml", content=pom_content, description="Maven configuration"),
+                    java_files=[
+                        CodeFile(file_path=f"src/main/java/com/app/{pkg_name}/controller/{controller_name}.java", content=controller_code, description=f"{clean_title} Controller"),
+                    ],
+                    test_files=[
+                        CodeFile(file_path=f"src/test/java/com/app/{pkg_name}/controller/{controller_name}Test.java", content=test_code, description="Test Suite"),
+                    ],
+                )
         elif schema_cls == ReactArtifacts:
             if is_todo:
                 pkg_content = """{
@@ -954,72 +953,76 @@ test('renders calculator title', () => {
                     ],
                 )
             else:
-                pkg_content = """{
-  "name": "react-order-dashboard",
+                clean_title = self._extract_clean_title(prompt)
+                first_word = re.sub(r'[^a-zA-Z]', '', clean_title.split()[0]) if clean_title.split() else "App"
+                pkg_name = f"react-{first_word.lower()}-app"
+                
+                pkg_content = f"""{{
+  "name": "{pkg_name}",
   "version": "1.0.0",
   "private": true,
-  "dependencies": {
+  "dependencies": {{
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
-  },
-  "scripts": {
+  }},
+  "scripts": {{
     "start": "react-scripts start",
     "test": "react-scripts test --watchAll=false"
-  }
-}
+  }}
+}}
 """
-                app_code = """import React, { useState } from 'react';
+                app_code = f"""import React, {{ useState }} from 'react';
 import './App.css';
 
-export default function App() {
-  const [orders] = useState([
-    { id: 1, customer: 'John Doe', amount: 29.99, status: 'DELIVERED' },
-    { id: 2, customer: 'Jane Smith', amount: 45.50, status: 'PREPARING' }
+export default function App() {{
+  const [items] = useState([
+    {{ id: 1, name: '{clean_title} Primary Record', status: 'ACTIVE' }},
+    {{ id: 2, name: '{clean_title} Secondary Record', status: 'PENDING' }}
   ]);
 
   return (
     <div className="dashboard-container">
       <header className="header">
-        <h1>🚀 Food Order Dashboard</h1>
+        <h1>🏥 {clean_title}</h1>
+        <span className="badge active">Spring Boot REST Connected</span>
       </header>
       <main className="content">
-        <div className="order-grid">
-          {orders.map((o) => (
-            <div key={o.id} className="order-card">
-              <h3>Order #{o.id}</h3>
-              <p>Customer: {o.customer}</p>
-              <p>Amount: ${o.amount}</p>
-              <span className={`badge ${o.status.toLowerCase()}`}>{o.status}</span>
+        <div className="card-grid">
+          {{items.map((item) => (
+            <div key={{item.id}} className="card">
+              <h3>Item #{{item.id}}</h3>
+              <p>{{item.name}}</p>
+              <span className={{`badge ${{item.status.toLowerCase()}}`}}>{{item.status}}</span>
             </div>
-          ))}
+          ))}}
         </div>
       </main>
     </div>
   );
-}
+}}
 """
                 css_code = """.dashboard-container {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   background-color: #0f172a;
   color: #f8fafc;
   min-height: 100vh;
   padding: 2rem;
 }
-.header { border-bottom: 2px solid #1e293b; padding-bottom: 1rem; margin-bottom: 2rem; }
-.order-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-.order-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; }
-.badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; margin-top: 0.5rem; }
-.badge.delivered { background-color: #065f46; color: #34d399; }
-.badge.preparing { background-color: #92400e; color: #fbbf24; }
+.header { border-bottom: 2px solid #1e293b; padding-bottom: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; }
+.badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 600; font-size: 0.75rem; }
+.badge.active { background-color: #065f46; color: #34d399; }
+.badge.pending { background-color: #92400e; color: #fbbf24; }
 """
-                test_code = """import { render, screen } from '@testing-library/react';
+                test_code = f"""import {{ render, screen }} from '@testing-library/react';
 import App from './App';
 
-test('renders order dashboard title', () => {
+test('renders app title', () => {{
   render(<App />);
-  const titleElement = screen.getByText(/Food Order Dashboard/i);
+  const titleElement = screen.getByText(/{first_word}/i);
   expect(titleElement).toBeInTheDocument();
-});
+}});
 """
                 return ReactArtifacts(
                     package_json=CodeFile(file_path="package.json", content=pkg_content, description="NPM Package Config"),
