@@ -431,23 +431,10 @@ public class OrderControllerTest {
                     CodeFile(
                         file_path="src/test/java/com/foodapp/orderservice/controller/OrderControllerTest.java",
                         content=test_code,
-                return SpringBootArtifacts(
-                    pom_xml=CodeFile(file_path="pom.xml", content=pom_content, description="Maven configuration"),
-                    java_files=[
-                        CodeFile(
-                            file_path="src/main/java/com/foodapp/orderservice/controller/OrderController.java",
-                            content=controller_code,
-                            description="REST Controller for Orders",
-                        )
-                    ],
-                    test_files=[
-                        CodeFile(
-                            file_path="src/test/java/com/foodapp/orderservice/controller/OrderControllerTest.java",
-                            content=test_code,
-                            description="JUnit 5 Test for Order Controller",
-                        )
-                    ],
-                )
+                        description="JUnit 5 Test for Order Controller",
+                    )
+                ],
+            )
         elif schema_cls == ReactArtifacts:
             if is_todo:
                 pkg_content = """{
