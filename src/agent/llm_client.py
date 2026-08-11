@@ -175,7 +175,16 @@ class LLMClient:
         is_calc = "calc" in prompt_lower or "calculator" in prompt_lower or "math" in prompt_lower
         is_snake = "snake" in prompt_lower or "game" in prompt_lower
 
-        if schema_cls == ReproductionTest:
+        if schema_cls.__name__ == "RequirementAnalysisResult":
+            from src.agent.analyzer import RequirementAnalysisResult
+            return RequirementAnalysisResult(
+                is_clear=True,
+                summary=f"Analyzed specification for requirement: {prompt[:40]}",
+                suggested_entities=["DomainEntity", "UserSession"],
+                suggested_endpoints=["GET /api/resource", "POST /api/resource"],
+                clarifying_questions=[]
+            )
+        elif schema_cls == ReproductionTest:
             return ReproductionTest(
                 test_file_path="tests/test_reproduction.py",
                 test_code="from sample_app import calculate\n\ndef test_calculate_bug():\n    # Expect calculate(5) to return 6 (5 + 1), currently returns 4 (5 - 1)\n    assert calculate(5) == 6\n",

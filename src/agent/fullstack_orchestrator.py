@@ -54,6 +54,17 @@ class FullStackOrchestrator:
         emit("log", f"=======================================================\n")
         emit("log", f"Feature Requirement: {self.feature_requirement}")
 
+        # STEP 0: Requirement Analyzer Agent
+        emit("step", "\n[STEP 0] Running Architect Requirement Analyzer Agent...")
+        from src.agent.analyzer import RequirementAnalyzer
+        analyzer = RequirementAnalyzer(self.llm_client)
+        analysis = analyzer.analyze_requirement(self.feature_requirement)
+        emit("log", f"   [ANALYSIS SUMMARY]: {analysis.summary}")
+        emit("log", f"   [DYNAMIC ENTITIES]: {analysis.suggested_entities}")
+        emit("log", f"   [DYNAMIC ENDPOINTS]: {analysis.suggested_endpoints}")
+        if analysis.clarifying_questions:
+            emit("log", f"   [CLARIFYING QUESTIONS FOR DEVELOPER]: {analysis.clarifying_questions}")
+
         # STEP 1: Parse Architecture Specification
         emit("step", "\n[STEP 1] Generating Architectural Specification...")
         spec_prompt = render_fullstack_prompt(self.feature_requirement)
