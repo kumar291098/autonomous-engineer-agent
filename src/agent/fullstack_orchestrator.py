@@ -115,6 +115,7 @@ class FullStackOrchestrator:
                 size_kb = round(p.stat().st_size / 1024, 2)
                 print(f"   📄 {rel} ({size_kb} KB)")
             except Exception:
+                print(f"   📄 {p.name}")
         print("-------------------------------------------------------")
 
     def _generate_standalone_metadata(self, spec: FeatureSpecification):
