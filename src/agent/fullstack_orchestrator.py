@@ -76,8 +76,8 @@ class FullStackOrchestrator:
 
         # Stream Java source code live
         for java_file in backend.java_files:
-            emit("stream_code", f"\n▶️ [STREAMING JAVA SOURCE]: {java_file.filepath}", java_file.filepath, java_file.content)
-            self._stream_code_to_console(java_file.filepath, java_file.content)
+            emit("stream_code", f"\n▶️ [STREAMING JAVA SOURCE]: {java_file.file_path}", java_file.file_path, java_file.content)
+            self._stream_code_to_console(java_file.file_path, java_file.content)
 
         # STEP 3: Generate React UI Frontend & Component Tests
         emit("step", "\n[STEP 3] Generating React UI Frontend & Test Suite...")
@@ -90,8 +90,8 @@ class FullStackOrchestrator:
 
         # Stream React JSX code live
         for react_file in frontend.component_files:
-            emit("stream_code", f"\n▶️ [STREAMING REACT JSX]: {react_file.filepath}", react_file.filepath, react_file.content)
-            self._stream_code_to_console(react_file.filepath, react_file.content)
+            emit("stream_code", f"\n▶️ [STREAMING REACT JSX]: {react_file.file_path}", react_file.file_path, react_file.content)
+            self._stream_code_to_console(react_file.file_path, react_file.content)
 
         # STEP 4: Generate Standalone Application Metadata
         emit("step", "\n[STEP 4] Generating Standalone Application Metadata...")

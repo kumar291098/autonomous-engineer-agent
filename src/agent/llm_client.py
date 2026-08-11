@@ -56,19 +56,24 @@ class LLMClient:
             return self._call_gemini_rest_api(prompt, schema_cls)
 
     def _call_gemini_rest_api(self, prompt: str, schema_cls: Type[T]) -> T:
-        """Native urllib REST API client for Google Gemini."""
+        """Native urllib REST API client for Google Gemini with multi-model fallback."""
         import urllib.request
         import json
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+        models_to_try = [
+            self.model_name,
+            "gemini-2.5-flash",
+            "gemini-1.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-pro",
+        ]
+
         headers = {"Content-Type": "application/json"}
-        
         schema_json = json.dumps(schema_cls.model_json_schema())
         full_prompt = (
             f"You are a Senior Engineer AI Agent. Return strictly a JSON object matching this schema: {schema_json}\n\n"
             f"USER PROMPT:\n{prompt}"
         )
-        
         payload = {
             "contents": [{"parts": [{"text": full_prompt}]}],
             "generationConfig": {
@@ -76,12 +81,21 @@ class LLMClient:
                 "temperature": 0.2
             }
         }
-        
-        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            resp_data = json.loads(resp.read().decode("utf-8"))
-            raw_text = resp_data["candidates"][0]["content"]["parts"][0]["text"]
-            return self.extract_json_schema(raw_text, schema_cls)
+
+        last_error = None
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={self.api_key}"
+            try:
+                req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+                with urllib.request.urlopen(req, timeout=45) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    raw_text = resp_data["candidates"][0]["content"]["parts"][0]["text"]
+                    return self.extract_json_schema(raw_text, schema_cls)
+            except Exception as ex:
+                last_error = ex
+                continue
+
+        raise last_error or RuntimeError("Failed to query Gemini API across all model endpoints.")
 
     def _call_openai(self, prompt: str, schema_cls: Type[T]) -> T:
         """Uses OpenAI structured outputs parser or native urllib REST API."""
