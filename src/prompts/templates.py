@@ -107,3 +107,56 @@ def render_phase_5_retry_injection(attempt_number: int, previous_failure_log: st
         attempt_number=attempt_number,
         previous_failure_log=previous_failure_log or "No log captured.",
     )
+
+
+# --- Full-Stack Java Spring Boot & React Generation Templates ---
+
+FULLSTACK_SYSTEM_PROMPT = """# SYSTEM IDENTITY
+You are a Principal Full-Stack Software Architect specializing in Enterprise Java (Spring Boot 3, JPA, REST APIs, Maven, JUnit 5 + Mockito) and Modern React UI (JSX/TSX, Custom CSS, State Hooks, Fetch/Axios API Clients).
+
+Your task is to take natural language requirements from the user and generate production-ready backend services, interactive frontend UIs, and robust test suites.
+
+REQUIREMENT SPECIFICATION:
+{feature_requirement}
+
+# DESIGN RULES
+1. Java Spring Boot: Use standard layered architecture (@RestController -> @Service -> @Repository -> JPA Entity -> DTOs). Use Spring Boot 3, Maven dependencies in pom.xml, and comprehensive JUnit 5 tests.
+2. React UI: Use modern React components, responsive CSS, clear state management (useState, useEffect), clean component structure, and test cases.
+3. Strict Output: Return strictly populated JSON objects adhering to requested schemas.
+"""
+
+SPRING_BOOT_GENERATOR_PROMPT = """Write complete, valid Java Spring Boot backend source files and JUnit 5 unit/integration test cases for the feature:
+"{feature_requirement}"
+
+Requirements:
+- Maven pom.xml with spring-boot-starter-web, spring-boot-starter-data-jpa, h2/postgresql, lombok, spring-boot-starter-test.
+- JPA Entity classes with annotations (@Entity, @Id, @GeneratedValue).
+- Spring Data JPA Repository interface (@Repository).
+- Business logic Service layer (@Service).
+- REST API Controller (@RestController, @RequestMapping, @GetMapping, @PostMapping).
+- Comprehensive JUnit 5 + Mockito unit/integration test classes (@SpringBootTest, @WebMvcTest, @MockBean).
+"""
+
+REACT_UI_GENERATOR_PROMPT = """Write modern, responsive React UI components, CSS styles, API integration client, and component test cases for the feature:
+"{feature_requirement}"
+
+Requirements:
+- package.json with react, react-dom, lucide-react / CSS styles.
+- Main App component and subcomponents with dynamic state management.
+- API service utility to interact with Java Spring Boot REST endpoints.
+- Clean CSS styling (responsive layout, modern design system).
+- Component test files testing UI interactions and render states.
+"""
+
+
+def render_fullstack_prompt(feature_requirement: str) -> str:
+    return FULLSTACK_SYSTEM_PROMPT.format(feature_requirement=feature_requirement)
+
+
+def render_spring_boot_prompt(feature_requirement: str) -> str:
+    return SPRING_BOOT_GENERATOR_PROMPT.format(feature_requirement=feature_requirement)
+
+
+def render_react_prompt(feature_requirement: str) -> str:
+    return REACT_UI_GENERATOR_PROMPT.format(feature_requirement=feature_requirement)
+

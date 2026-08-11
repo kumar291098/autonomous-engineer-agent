@@ -48,3 +48,43 @@ class ValidationResult(BaseModel):
     suite_passed: bool = Field(default=False)
     console_output: str = Field(default="")
     error_log: Optional[str] = Field(default=None)
+
+
+# --- Full-Stack Generator Schemas ---
+
+class CodeFile(BaseModel):
+    """Represents a generated source file."""
+    file_path: str = Field(description="Relative path for the file e.g., src/main/java/com/app/OrderController.java")
+    content: str = Field(description="Full source code content")
+    description: str = Field(default="", description="Description of file purpose")
+
+
+class FeatureSpecification(BaseModel):
+    """User requirement parsed into structured architecture specification."""
+    feature_title: str = Field(description="Title of the application feature")
+    summary: str = Field(description="Summary of functional requirements")
+    entities: List[str] = Field(default_factory=list, description="List of domain entities")
+    api_endpoints: List[str] = Field(default_factory=list, description="List of REST API endpoints")
+    ui_views: List[str] = Field(default_factory=list, description="List of React UI screens")
+
+
+class SpringBootArtifacts(BaseModel):
+    """Generated Java Spring Boot backend files and tests."""
+    pom_xml: CodeFile = Field(description="Maven pom.xml file")
+    java_files: List[CodeFile] = Field(default_factory=list, description="Controllers, Services, Repositories, Entities")
+    test_files: List[CodeFile] = Field(default_factory=list, description="JUnit 5 + Mockito test files")
+
+
+class ReactArtifacts(BaseModel):
+    """Generated React frontend files and tests."""
+    package_json: CodeFile = Field(description="NPM package.json file")
+    component_files: List[CodeFile] = Field(default_factory=list, description="React components, styles, API service")
+    test_files: List[CodeFile] = Field(default_factory=list, description="React testing library / Vitest tests")
+
+
+class FullStackBundle(BaseModel):
+    """Complete Full-Stack Application Bundle."""
+    spec: FeatureSpecification
+    backend: SpringBootArtifacts
+    frontend: ReactArtifacts
+
