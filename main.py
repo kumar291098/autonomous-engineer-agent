@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+import re
 from pathlib import Path
 
 # Ensure src module is in Python path
