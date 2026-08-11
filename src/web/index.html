@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Senior Software Engineer Agent - Copilot Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .config-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .config-bar select, .config-bar input {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #f3f4f6;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .config-bar input {
+      width: 220px;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    /* Left Chat Sidebar */
+    .chat-panel {
+      width: 420px;
+      background: #111827;
+      border-right: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-header {
+      padding: 1rem;
+      border-bottom: 1px solid #1f2937;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-feed {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .msg {
+      max-width: 90%;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+    .msg.agent {
+      align-self: flex-start;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #334155;
+    }
+    .msg.agent strong {
+      color: #38bdf8;
+    }
+    .chat-input-box {
+      padding: 1rem;
+      border-top: 1px solid #1f2937;
+      background: #0f172a;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-input-box textarea {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      padding: 0.75rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: none;
+      height: 48px;
+      outline: none;
+    }
+    .chat-input-box button {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 0 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-input-box button:hover {
+      background: #0369a1;
+    }
+    /* Right Code & Live Sandbox Panel */
+    .workspace-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0b0f19;
+    }
+    .tabs-header {
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tab-btn.active {
+      background: #1e293b;
+      color: #38bdf8;
+    }
+    .tab-btn:hover {
+      color: #f1f5f9;
+    }
+    .tab-content {
+      flex: 1;
+      display: none;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+    /* Code Viewer */
+    .code-container {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .code-header {
+      background: #161b22;
+      padding: 0.75rem 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: #8b949e;
+      border-bottom: 1px solid #21262d;
+      display: flex;
+      justify-content: space-between;
+    }
+    pre code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: #c9d1d9;
+      line-height: 1.6;
+      padding: 1rem;
+      display: block;
+      white-space: pre-wrap;
+    }
+    /* Live Interactive Sandbox Component */
+    .sandbox-box {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid #334155;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .calc-screen {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: right;
+      font-family: 'Fira Code', monospace;
+      font-size: 2rem;
+      color: #38bdf8;
+      margin-bottom: 1.5rem;
+      border: 1px solid #334155;
+      min-height: 64px;
+      word-break: break-all;
+    }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+    .calc-btn {
+      background: #334155;
+      border: none;
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 600;
+      padding: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .calc-btn:hover { background: #475569; }
+    .calc-btn.op { background: #0284c7; color: #fff; }
+    .calc-btn.op:hover { background: #0369a1; }
+    .calc-btn.eq { background: #059669; grid-column: span 2; }
+    .calc-btn.eq:hover { background: #047857; }
+    .calc-btn.clear { background: #dc2626; }
+    .calc-btn.clear:hover { background: #b91c1c; }
+    .btn-download {
+      background: #059669;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      width: fit-content;
+    }
+    .btn-download:hover { background: #047857; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      🤖 Agent Copilot Studio
+      <span class="badge">Java Spring Boot + React</span>
+    </div>
+    <div class="config-bar">
+      <label style="font-size:0.85rem; color:#94a3b8">AI Provider:</label>
+      <select id="providerSelect">
+        <option value="gemini">Google Gemini AI</option>
+        <option value="openai">OpenAI (GPT-4o)</option>
+        <option value="mock">Mock Offline Demo</option>
+      </select>
+      <input type="password" id="apiKeyInput" placeholder="Paste API Key (Optional)...">
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Chat Sidebar -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        💬 Copilot Conversation
+        <span style="font-size:0.75rem; color:#10b981">● Connected</span>
+      </div>
+      <div class="chat-feed" id="chatFeed">
+        <div class="msg agent">
+          <strong>Senior Engineer Agent:</strong><br>
+          Hello! I am your Senior Software Engineer Copilot. What full-stack Java Spring Boot & React application would you like me to build or debug for you today?
+        </div>
+      </div>
+      <div class="chat-input-box">
+        <textarea id="promptInput" placeholder="Type prompt e.g., 'Make simple calculator' or 'Build Food Delivery Order App'"></textarea>
+        <button id="sendBtn">Generate</button>
+      </div>
+    </div>
+
+    <!-- Workspace & Live Sandbox -->
+    <div class="workspace-panel">
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('sandboxTab', this)">📱 Live UI Sandbox</button>
+        <button class="tab-btn" onclick="switchTab('javaTab', this)">☕ Java Spring Boot Backend</button>
+        <button class="tab-btn" onclick="switchTab('reactTab', this)">⚛️ React Frontend Code</button>
+        <button class="tab-btn" onclick="switchTab('exportTab', this)">📦 Download Application</button>
+      </div>
+
+      <!-- Live Sandbox Tab -->
+      <div class="tab-content active" id="sandboxTab">
+        <h2 style="margin-bottom:1rem; color:#38bdf8; font-size:1.2rem">Interactive Live React UI Component Preview</h2>
+        <div class="sandbox-box">
+          <div class="calc-screen" id="calcDisplay">0</div>
+          <div class="calc-grid">
+            <button class="calc-btn clear" onclick="calcClear()">C</button>
+            <button class="calc-btn op" onclick="calcPress('/')">/</button>
+            <button class="calc-btn op" onclick="calcPress('*')">×</button>
+            <button class="calc-btn op" onclick="calcPress('-')">-</button>
+
+            <button class="calc-btn" onclick="calcPress('7')">7</button>
+            <button class="calc-btn" onclick="calcPress('8')">8</button>
+            <button class="calc-btn" onclick="calcPress('9')">9</button>
+            <button class="calc-btn op" onclick="calcPress('+')">+</button>
+
+            <button class="calc-btn" onclick="calcPress('4')">4</button>
+            <button class="calc-btn" onclick="calcPress('5')">5</button>
+            <button class="calc-btn" onclick="calcPress('6')">6</button>
+            <button class="calc-btn eq" onclick="calcEval()">=</button>
+
+            <button class="calc-btn" onclick="calcPress('1')">1</button>
+            <button class="calc-btn" onclick="calcPress('2')">2</button>
+            <button class="calc-btn" onclick="calcPress('3')">3</button>
+            <button class="calc-btn" onclick="calcPress('0')">0</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Java Code Tab -->
+      <div class="tab-content" id="javaTab">
+        <div class="code-container">
+          <div class="code-header">
+            <span>backend/src/main/java/com/app/controller/CalculatorController.java</span>
+            <span>Java 17 / Spring Boot 3</span>
+          </div>
+          <pre><code id="javaCode">// Spring Boot Controller Code Will Render Here...</code></pre>
+        </div>
+      </div>
+
+      <!-- React Code Tab -->
+      <div class="tab-content" id="reactTab">
+        <div class="code-container">
+          <div class="code-header">
+            <span>frontend/src/App.jsx</span>
+            <span>React 18 / JSX</span>
+          </div>
+          <pre><code id="reactCode">// React Component Code Will Render Here...</code></pre>
+        </div>
+      </div>
+
+      <!-- Export Tab -->
+      <div class="tab-content" id="exportTab">
+        <h2 style="margin-bottom:0.5rem; color:#38bdf8">Download Standalone Application Bundle</h2>
+        <p style="color:#94a3b8; margin-bottom:1.5rem">Download your generated Java Spring Boot + React project as a standalone ZIP archive with zero agent dependencies.</p>
+        <a href="/api/download?target=output_app" class="btn-download" id="downloadZipBtn">
+          ⬇️ Download generated_app.zip
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(tabId, btnEl) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btnEl.classList.add('active');
+    }
+
+    // Live Calculator Sandbox logic
+    let calcExpr = "";
+    function calcPress(val) {
+      if (calcExpr === "0" && val !== ".") calcExpr = "";
+      calcExpr += val;
+      document.getElementById('calcDisplay').innerText = calcExpr;
+    }
+    function calcClear() {
+      calcExpr = "";
+      document.getElementById('calcDisplay').innerText = "0";
+    }
+    function calcEval() {
+      try {
+        const res = eval(calcExpr);
+        calcExpr = String(res);
+        document.getElementById('calcDisplay').innerText = calcExpr;
+      } catch (err) {
+        document.getElementById('calcDisplay').innerText = "Error";
+        calcExpr = "";
+      }
+    }
+
+    // Chat Generation Call
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const prompt = document.getElementById('promptInput').value.trim();
+      if (!prompt) return;
+
+      const provider = document.getElementById('providerSelect').value;
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+
+      const chatFeed = document.getElementById('chatFeed');
+      
+      // Add user message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'msg user';
+      userDiv.innerText = prompt;
+      chatFeed.appendChild(userDiv);
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+
+      document.getElementById('promptInput').value = '';
+
+      // Add thinking message
+      const agentDiv = document.createElement('div');
+      agentDiv.className = 'msg agent';
+      agentDiv.innerHTML = '<strong>Copilot:</strong> Generating Java Spring Boot API & React UI...';
+      chatFeed.appendChild(agentDiv);
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, provider, api_key: apiKey })
+        });
+        const data = await res.json();
+
+        if (data.status === 'SUCCESS') {
+          const spec = data.bundle.spec;
+          agentDiv.innerHTML = `<strong>Copilot:</strong> 🎉 Successfully generated <strong>${spec.feature_title}</strong>!<br><br>
+          • Entities: ${spec.entities.join(', ')}<br>
+          • Endpoints: ${spec.api_endpoints.join(', ')}<br><br>
+          Inspect generated files in the Java & React code tabs or test the live sandbox on the right!`;
+
+          // Populate code viewers
+          if (data.bundle.backend && data.bundle.backend.java_files.length > 0) {
+            document.getElementById('javaCode').innerText = data.bundle.backend.java_files[0].content;
+          }
+          if (data.bundle.frontend && data.bundle.frontend.component_files.length > 0) {
+            document.getElementById('reactCode').innerText = data.bundle.frontend.component_files[0].content;
+          }
+        } else {
+          agentDiv.innerHTML = `<strong>Copilot Error:</strong> ${data.reason || 'Failed to generate app.'}`;
+        }
+      } catch (err) {
+        agentDiv.innerHTML = `<strong>Copilot Error:</strong> ${err.message}`;
+      }
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+    });
+  </script>
+</body>
+</html>

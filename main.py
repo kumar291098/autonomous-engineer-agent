@@ -12,9 +12,13 @@ from src.agent.orchestrator import OrchestratorEngine
 from src.agent.fullstack_orchestrator import FullStackOrchestrator
 
 
+from src.web.server import start_copilot_web_server
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Autonomous Senior Software Engineer Agent Pipeline")
     parser.add_argument("-i", "--interactive", action="store_true", help="Launch interactive prompt mode in terminal")
+    parser.add_argument("-w", "--web", action="store_true", help="Launch Copilot Web Dashboard UI")
     parser.add_argument("--mode", type=str, default="bugfix", choices=["bugfix", "fullstack"], help="Agent mode: bugfix or fullstack")
     parser.add_argument("--feature", type=str, default="Order Management Service with React UI Dashboard and Java Spring Boot REST API", help="Feature requirement for fullstack mode")
     parser.add_argument("--repo", type=str, default="./demo_repo", help="Path to target repository")
@@ -30,6 +34,10 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    if args.web:
+        start_copilot_web_server(port=5000)
+        return
 
     if args.interactive:
         print("\n=======================================================")
@@ -65,8 +73,13 @@ def main():
         print("\nSelect Operating Mode:")
         print("  1. Full-Stack App Generator (React UI + Java Spring Boot + Tests)")
         print("  2. Autonomous Bug Resolution Pipeline")
-        choice = input("Enter choice (1 or 2, default 1): ").strip() or "1"
-        
+        print("  3. Open Copilot Web Chat Dashboard UI (Browser Interface)")
+        choice = input("Enter choice (1, 2, or 3, default 1): ").strip() or "1"
+
+        if choice == "3":
+            start_copilot_web_server(port=5000)
+            return
+
         if choice == "1":
             args.mode = "fullstack"
             user_prompt = input("\n💬 Enter your application requirement / prompt:\n> ").strip()
