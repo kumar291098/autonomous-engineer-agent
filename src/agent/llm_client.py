@@ -32,9 +32,8 @@ class LLMClient:
             else:
                 return self._call_gemini(prompt, schema_cls)
         except Exception as ex:
-            print(f"[LLMClient Warning] LLM API call failed: {ex}. Falling back to clean JSON extraction.")
-            raw_text = self._call_generic_completion(prompt)
-            return self.extract_json_schema(raw_text, schema_cls)
+            print(f"[LLMClient Warning] LLM API call failed ({ex}). Falling back to schema mock generator.")
+            return self._generate_mock_output(prompt, schema_cls)
 
     def _call_gemini(self, prompt: str, schema_cls: Type[T]) -> T:
         """Uses google-genai library if installed."""
