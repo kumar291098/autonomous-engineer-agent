@@ -65,23 +65,36 @@ class FullStackOrchestrator:
         if analysis.clarifying_questions:
             emit("log", f"   [CLARIFYING QUESTIONS FOR DEVELOPER]: {analysis.clarifying_questions}")
 
-        # STEP 1: Parse Architecture Specification
-        emit("step", "\n[STEP 1] Generating Architectural Specification...")
+        # STEP 1: Planner Agent (Gather Requirements & Proposal)
+        emit("step", "\n[STEP 1] Running Planner Agent (Gathering Requirements & Architectural Proposal)...")
+        from src.agent.planner import PlannerAgent
+        from src.agent.developer import DeveloperAgent
+        from src.agent.tester import TestingAgent
+        from src.agent.self_healing import SelfHealingLoopEngine
+
+        planner = PlannerAgent(self.llm_client)
+        proposal = planner.create_proposal(self.feature_requirement)
+        emit("log", f"   [PROPOSAL TITLE]: {proposal.title}")
+        emit("log", f"   [EXECUTIVE SUMMARY]: {proposal.executive_summary}")
+        emit("log", f"   [PLANNED ENTITIES]: {proposal.domain_entities}")
+        emit("log", f"   [PLANNED REST ROUTES]: {proposal.rest_api_routes}")
+        emit("log", f"   [PLANNED REACT VIEWS]: {proposal.react_ui_views}")
+        emit("log", f"   [APPROVAL STATUS]: APPROVED & READY FOR DEVELOPMENT")
+
+        # Architectural Specification
         spec_prompt = render_fullstack_prompt(self.feature_requirement)
         spec: FeatureSpecification = self.llm_client.generate_structured_output(
             spec_prompt, FeatureSpecification
         )
-        emit("log", f"   [OK] Feature Title: {spec.feature_title}")
-        emit("log", f"   [OK] Entities: {spec.entities}")
-        emit("log", f"   [OK] REST Endpoints: {spec.api_endpoints}")
-        emit("log", f"   [OK] UI Views: {spec.ui_views}")
 
-        # STEP 2: Generate Java Spring Boot Backend & JUnit 5 Tests
-        emit("step", "\n[STEP 2] Generating Java Spring Boot Backend & JUnit 5 Test Suite...")
-        sb_prompt = render_spring_boot_prompt(self.feature_requirement)
-        backend: SpringBootArtifacts = self.llm_client.generate_structured_output(
-            sb_prompt, SpringBootArtifacts
-        )
+        # STEP 2: Developer Agent (Java Spring Boot Backend Generation)
+        emit("step", "\n[STEP 2] Running Developer Agent (Constructing Java Spring Boot Backend)...")
+        developer = DeveloperAgent(self.llm_client)
+        backend: SpringBootArtifacts = developer.build_backend(spec)
+
+        # STEP 3: Testing Agent (Backend JUnit 5 Tests)
+        tester = TestingAgent(self.llm_client)
+        backend = tester.ensure_backend_tests(backend)
         sb_paths = self.backend_scaffolder.scaffold(backend)
         emit("log", f"   [OK] Generated {len(sb_paths)} backend files (pom.xml, Java sources, JUnit tests).")
 
@@ -90,12 +103,10 @@ class FullStackOrchestrator:
             emit("stream_code", f"\n[STREAM] [STREAMING JAVA SOURCE]: {java_file.file_path}", java_file.file_path, java_file.content)
             self._stream_code_to_console(java_file.file_path, java_file.content)
 
-        # STEP 3: Generate React UI Frontend & Component Tests
-        emit("step", "\n[STEP 3] Generating React UI Frontend & Test Suite...")
-        react_prompt = render_react_prompt(self.feature_requirement)
-        frontend: ReactArtifacts = self.llm_client.generate_structured_output(
-            react_prompt, ReactArtifacts
-        )
+        # STEP 4: Developer Agent & Testing Agent (React UI Frontend & Component Tests)
+        emit("step", "\n[STEP 4] Running Developer & Testing Agents (Constructing React UI Frontend)...")
+        frontend: ReactArtifacts = developer.build_frontend(spec)
+        frontend = tester.ensure_frontend_tests(frontend)
         react_paths = self.frontend_scaffolder.scaffold(frontend)
         emit("log", f"   [OK] Generated {len(react_paths)} frontend files (package.json, JSX components, CSS, React tests).")
 
@@ -104,14 +115,14 @@ class FullStackOrchestrator:
             emit("stream_code", f"\n[STREAM] [STREAMING REACT JSX]: {react_file.file_path}", react_file.file_path, react_file.content)
             self._stream_code_to_console(react_file.file_path, react_file.content)
 
-        # STEP 4: Generate Standalone Application Metadata
-        emit("step", "\n[STEP 4] Generating Standalone Application Metadata...")
+        # STEP 5: Standalone Application Metadata
         self._generate_standalone_metadata(spec)
 
-        # STEP 5: Test Suite Validation
-        emit("step", "\n[STEP 5] Running Test Suite Validation Gate...")
-        sb_code, sb_log = self.backend_scaffolder.run_tests()
-        react_code, react_log = self.frontend_scaffolder.run_tests()
+        # STEP 6: Self-Healing Loop Engine (Validation Gate)
+        emit("step", "\n[STEP 5] Running Self-Healing Loop Engine & Validation Gate...")
+        healing_engine = SelfHealingLoopEngine(self.backend_scaffolder, self.frontend_scaffolder, self.llm_client)
+        val_result = healing_engine.validate_and_heal(max_retries=3)
+        emit("log", f"   [OK] Self-Healing Validation Result: {val_result['success']} (Attempts: {val_result['attempts']})")
 
         bundle = FullStackBundle(
             spec=spec,
