@@ -14,6 +14,7 @@ from src.agent.fullstack_orchestrator import FullStackOrchestrator
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Autonomous Senior Software Engineer Agent Pipeline")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Launch interactive prompt mode in terminal")
     parser.add_argument("--mode", type=str, default="bugfix", choices=["bugfix", "fullstack"], help="Agent mode: bugfix or fullstack")
     parser.add_argument("--feature", type=str, default="Order Management Service with React UI Dashboard and Java Spring Boot REST API", help="Feature requirement for fullstack mode")
     parser.add_argument("--repo", type=str, default="./demo_repo", help="Path to target repository")
@@ -28,6 +29,30 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    if args.interactive:
+        print("\n=======================================================")
+        print("🤖 Interactive Senior Engineer Agent Prompt Mode")
+        print("=======================================================")
+        print("Select Mode:")
+        print("  1. Full-Stack App Generator (React UI + Java Spring Boot + Tests)")
+        print("  2. Autonomous Bug Resolution Pipeline")
+        choice = input("Enter choice (1 or 2, default 1): ").strip() or "1"
+        
+        if choice == "1":
+            args.mode = "fullstack"
+            user_prompt = input("\n💬 Enter your application requirement / prompt:\n> ").strip()
+            if user_prompt:
+                args.feature = user_prompt
+            args.repo = input("\nEnter output project directory (default: ./output_app): ").strip() or "./output_app"
+            want_zip = input("Export as Zip archive? (y/n, default n): ").strip().lower()
+            if want_zip == "y":
+                args.export_zip = f"{args.repo}.zip"
+        else:
+            args.mode = "bugfix"
+            args.issue_title = input("\n💬 Enter Bug Title: ").strip() or "General Codebase Bug"
+            args.issue_desc = input("💬 Enter Bug Description: ").strip() or "Code calculation error"
+            args.repo = input("Enter target repository folder (default: ./demo_repo): ").strip() or "./demo_repo"
 
     repo_path = Path(args.repo).resolve()
     if not repo_path.exists():
