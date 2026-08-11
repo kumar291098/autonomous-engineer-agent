@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.log
+patch.diff
+demo_repo/.git/
+demo_repo/tests/test_reproduction.py
