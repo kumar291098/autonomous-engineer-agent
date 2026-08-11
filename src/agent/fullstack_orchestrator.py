@@ -37,48 +37,68 @@ class FullStackOrchestrator:
         self.backend_scaffolder = SpringBootScaffolder(str(self.target_dir))
         self.frontend_scaffolder = ReactScaffolder(str(self.target_dir))
 
-    def generate_fullstack_app(self, run_app: bool = False) -> Dict[str, Any]:
-        """Executes full-stack generation lifecycle."""
-        print(f"\n=======================================================")
-        print(f"[START] Full-Stack Java Spring Boot & React Generation")
-        print(f"=======================================================\n")
-        print(f"Feature Requirement: {self.feature_requirement}")
+    def generate_fullstack_app(self, run_app: bool = False, stream_callback=None) -> Dict[str, Any]:
+        """Executes full-stack generation lifecycle with real-time code streaming."""
+        def emit(event_type: str, message: str, file_path: str = None, code_chunk: str = None):
+            print(message)
+            if stream_callback:
+                stream_callback({
+                    "type": event_type,
+                    "message": message,
+                    "file_path": file_path,
+                    "code_chunk": code_chunk,
+                })
+
+        emit("log", f"\n=======================================================")
+        emit("log", f"[START] Full-Stack Java Spring Boot & React Generation")
+        emit("log", f"=======================================================\n")
+        emit("log", f"Feature Requirement: {self.feature_requirement}")
 
         # STEP 1: Parse Architecture Specification
-        print("\n[STEP 1] Generating Architectural Specification...")
+        emit("step", "\n[STEP 1] Generating Architectural Specification...")
         spec_prompt = render_fullstack_prompt(self.feature_requirement)
         spec: FeatureSpecification = self.llm_client.generate_structured_output(
             spec_prompt, FeatureSpecification
         )
-        print(f"   [OK] Feature Title: {spec.feature_title}")
-        print(f"   [OK] Entities: {spec.entities}")
-        print(f"   [OK] REST Endpoints: {spec.api_endpoints}")
-        print(f"   [OK] UI Views: {spec.ui_views}")
+        emit("log", f"   [OK] Feature Title: {spec.feature_title}")
+        emit("log", f"   [OK] Entities: {spec.entities}")
+        emit("log", f"   [OK] REST Endpoints: {spec.api_endpoints}")
+        emit("log", f"   [OK] UI Views: {spec.ui_views}")
 
         # STEP 2: Generate Java Spring Boot Backend & JUnit 5 Tests
-        print("\n[STEP 2] Generating Java Spring Boot Backend & JUnit 5 Test Suite...")
+        emit("step", "\n[STEP 2] Generating Java Spring Boot Backend & JUnit 5 Test Suite...")
         sb_prompt = render_spring_boot_prompt(self.feature_requirement)
         backend: SpringBootArtifacts = self.llm_client.generate_structured_output(
             sb_prompt, SpringBootArtifacts
         )
         sb_paths = self.backend_scaffolder.scaffold(backend)
-        print(f"   [OK] Generated {len(sb_paths)} backend files (pom.xml, Java sources, JUnit tests).")
+        emit("log", f"   [OK] Generated {len(sb_paths)} backend files (pom.xml, Java sources, JUnit tests).")
+
+        # Stream Java source code live
+        for java_file in backend.java_files:
+            emit("stream_code", f"\n▶️ [STREAMING JAVA SOURCE]: {java_file.filepath}", java_file.filepath, java_file.content)
+            self._stream_code_to_console(java_file.filepath, java_file.content)
 
         # STEP 3: Generate React UI Frontend & Component Tests
-        print("\n[STEP 3] Generating React UI Frontend & Test Suite...")
+        emit("step", "\n[STEP 3] Generating React UI Frontend & Test Suite...")
         react_prompt = render_react_prompt(self.feature_requirement)
         frontend: ReactArtifacts = self.llm_client.generate_structured_output(
             react_prompt, ReactArtifacts
         )
         react_paths = self.frontend_scaffolder.scaffold(frontend)
-        print(f"   [OK] Generated {len(react_paths)} frontend files (package.json, JSX components, CSS, React tests).")
+        emit("log", f"   [OK] Generated {len(react_paths)} frontend files (package.json, JSX components, CSS, React tests).")
 
-        # STEP 4: Generate Standalone Application Metadata (README.md & docker-compose.yml)
-        print("\n[STEP 4] Generating Standalone Application Metadata...")
+        # Stream React JSX code live
+        for react_file in frontend.component_files:
+            emit("stream_code", f"\n▶️ [STREAMING REACT JSX]: {react_file.filepath}", react_file.filepath, react_file.content)
+            self._stream_code_to_console(react_file.filepath, react_file.content)
+
+        # STEP 4: Generate Standalone Application Metadata
+        emit("step", "\n[STEP 4] Generating Standalone Application Metadata...")
         self._generate_standalone_metadata(spec)
 
         # STEP 5: Test Suite Validation
-        print("\n[STEP 5] Running Test Suite Validation Gate...")
+        emit("step", "\n[STEP 5] Running Test Suite Validation Gate...")
         sb_code, sb_log = self.backend_scaffolder.run_tests()
         react_code, react_log = self.frontend_scaffolder.run_tests()
 
@@ -111,6 +131,20 @@ class FullStackOrchestrator:
             "frontend_test_log": react_log,
             "bundle": bundle,
         }
+
+    def _stream_code_to_console(self, filepath: str, content: str):
+        """Streams generated code to console with live line-by-line typing effect."""
+        import sys, time
+        print("-------------------------------------------------------")
+        lines = content.splitlines()
+        preview = lines[:20]
+        for line in preview:
+            sys.stdout.write(f"   {line}\n")
+            sys.stdout.flush()
+            time.sleep(0.01)
+        if len(lines) > 20:
+            print(f"   ... ({len(lines) - 20} more lines generated)")
+        print("-------------------------------------------------------")
 
     def _print_generated_files_tree(self, all_paths: list):
         """Prints formatted list of all generated files."""
