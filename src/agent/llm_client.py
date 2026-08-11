@@ -101,8 +101,9 @@ class LLMClient:
         )
 
         prompt_lower = prompt.lower()
-        is_todo = "todo" in prompt_lower or "task" in prompt_lower
+        is_todo = "todo" in prompt_lower or "task manager" in prompt_lower or "task list" in prompt_lower
         is_calc = "calc" in prompt_lower or "calculator" in prompt_lower or "math" in prompt_lower
+        is_snake = "snake" in prompt_lower or "game" in prompt_lower
 
         if schema_cls == ReproductionTest:
             return ReproductionTest(
@@ -130,13 +131,13 @@ class LLMClient:
                 ),
             )
         elif schema_cls == FeatureSpecification:
-            if is_todo:
+            if is_snake:
                 return FeatureSpecification(
-                    feature_title="Todo Task Management System",
-                    summary="Task management platform with Java Spring Boot 3 REST API and React UI Dashboard.",
-                    entities=["Task", "Category", "User"],
-                    api_endpoints=["GET /api/tasks", "POST /api/tasks", "PUT /api/tasks/{id}", "DELETE /api/tasks/{id}"],
-                    ui_views=["TaskList", "TaskCreateForm", "CategoryFilter"],
+                    feature_title="Snake Game Application",
+                    summary="Retro Snake Game platform with Java Spring Boot REST API for high scores and React UI Canvas.",
+                    entities=["GameSession", "HighScore", "Player"],
+                    api_endpoints=["GET /api/game/scores", "POST /api/game/score", "GET /api/game/leaderboard"],
+                    ui_views=["GameBoardCanvas", "ScoreBoard", "GameOverModal"],
                 )
             elif is_calc:
                 return FeatureSpecification(
@@ -145,6 +146,14 @@ class LLMClient:
                     entities=["Calculation", "Operation", "History"],
                     api_endpoints=["POST /api/calculator/add", "POST /api/calculator/subtract", "GET /api/calculator/history"],
                     ui_views=["CalculatorKeypad", "DisplayScreen", "HistorySidebar"],
+                )
+            elif is_todo:
+                return FeatureSpecification(
+                    feature_title="Todo Task Management System",
+                    summary="Task management platform with Java Spring Boot 3 REST API and React UI Dashboard.",
+                    entities=["Task", "Category", "User"],
+                    api_endpoints=["GET /api/tasks", "POST /api/tasks", "PUT /api/tasks/{id}", "DELETE /api/tasks/{id}"],
+                    ui_views=["TaskList", "TaskCreateForm", "CategoryFilter"],
                 )
             else:
                 return FeatureSpecification(
@@ -155,7 +164,82 @@ class LLMClient:
                     ui_views=["OrderDashboard", "CreateOrderForm", "OrderDetailModal"],
                 )
         elif schema_cls == SpringBootArtifacts:
-            if is_todo:
+            if is_snake:
+                pom_content = """<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.snakegame</groupId>
+  <artifactId>game-service</artifactId>
+  <version>1.0.0</version>
+  <name>game-service</name>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.0</version>
+  </parent>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
+"""
+                controller_code = """package com.snakegame.gameservice.controller;
+
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/game")
+@CrossOrigin(origins = "*")
+public class SnakeGameController {
+
+    private final List<Map<String, Object>> scores = new ArrayList<>();
+
+    @GetMapping("/scores")
+    public List<Map<String, Object>> getScores() {
+        return scores;
+    }
+
+    @PostMapping("/score")
+    public Map<String, Object> recordScore(@RequestParam String player, @RequestParam int score) {
+        Map<String, Object> entry = Map.of("player", player, "score", score, "timestamp", new Date().toString());
+        scores.add(entry);
+        return entry;
+    }
+}
+"""
+                test_code = """package com.snakegame.gameservice.controller;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class SnakeGameControllerTest {
+    @Test
+    public void testScoreRecording() {
+        SnakeGameController controller = new SnakeGameController();
+        var res = controller.recordScore("Alex", 150);
+        assertEquals("Alex", res.get("player"));
+    }
+}
+"""
+                return SpringBootArtifacts(
+                    pom_xml=CodeFile(file_path="pom.xml", content=pom_content, description="Maven configuration"),
+                    java_files=[
+                        CodeFile(file_path="src/main/java/com/snakegame/gameservice/controller/SnakeGameController.java", content=controller_code, description="Snake Game Controller"),
+                    ],
+                    test_files=[
+                        CodeFile(file_path="src/test/java/com/snakegame/gameservice/controller/SnakeGameControllerTest.java", content=test_code, description="Test Suite"),
+                    ],
+                )
+            elif is_calc:
                 pom_content = """<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
