@@ -714,52 +714,216 @@ import './App.css';
 
 export default function App() {
   const [display, setDisplay] = useState('0');
+  const [expression, setExpression] = useState('');
 
   const handlePress = (val) => {
-    if (display === '0' && val !== '.') setDisplay(val);
-    else setDisplay(display + val);
+    if (display === '0' && val !== '.') {
+      setDisplay(val);
+    } else {
+      setDisplay(display + val);
+    }
   };
 
-  const handleClear = () => setDisplay('0');
+  const handleClear = () => {
+    setDisplay('0');
+    setExpression('');
+  };
+
+  const handleDelete = () => {
+    if (display.length > 1) {
+      setDisplay(display.slice(0, -1));
+    } else {
+      setDisplay('0');
+    }
+  };
 
   const handleEqual = () => {
-    try { setDisplay(String(eval(display))); }
-    catch { setDisplay('Error'); }
+    try {
+      setExpression(display + ' =');
+      const calculated = Function('"use strict";return (' + display + ')')();
+      setDisplay(String(calculated));
+    } catch {
+      setDisplay('Error');
+    }
   };
 
   return (
-    <div className="calc-container">
-      <h1>🧮 Scientific Calculator</h1>
-      <div className="calc-screen">{display}</div>
-      <div className="calc-grid">
-        <button onClick={handleClear} className="btn clear">C</button>
-        <button onClick={() => handlePress('/')} className="btn op">/</button>
-        <button onClick={() => handlePress('*')} className="btn op">×</button>
-        <button onClick={() => handlePress('-')} className="btn op">-</button>
-        <button onClick={() => handlePress('7')} className="btn">7</button>
-        <button onClick={() => handlePress('8')} className="btn">8</button>
-        <button onClick={() => handlePress('9')} className="btn">9</button>
-        <button onClick={() => handlePress('+')} className="btn op">+</button>
-        <button onClick={() => handlePress('4')} className="btn">4</button>
-        <button onClick={() => handlePress('5')} className="btn">5</button>
-        <button onClick={() => handlePress('6')} className="btn">6</button>
-        <button onClick={handleEqual} className="btn eq">=</button>
-        <button onClick={() => handlePress('1')} className="btn">1</button>
-        <button onClick={() => handlePress('2')} className="btn">2</button>
-        <button onClick={() => handlePress('3')} className="btn">3</button>
-        <button onClick={() => handlePress('0')} className="btn">0</button>
+    <div className="calc-wrapper">
+      <div className="calc-container">
+        <header className="calc-header">
+          <h2>🧮 Professional Calculator</h2>
+          <span className="calc-badge">Spring Boot REST Connected</span>
+        </header>
+
+        <div className="calc-screen-box">
+          <div className="calc-expression">{expression || '\u00A0'}</div>
+          <div className="calc-screen">{display}</div>
+        </div>
+
+        <div className="calc-grid">
+          <button onClick={handleClear} className="btn btn-clear">C</button>
+          <button onClick={() => handlePress('(')} className="btn btn-util">(</button>
+          <button onClick={() => handlePress(')')} className="btn btn-util">)</button>
+          <button onClick={() => handlePress('/')} className="btn btn-op">÷</button>
+
+          <button onClick={() => handlePress('7')} className="btn btn-num">7</button>
+          <button onClick={() => handlePress('8')} className="btn btn-num">8</button>
+          <button onClick={() => handlePress('9')} className="btn btn-num">9</button>
+          <button onClick={() => handlePress('*')} className="btn btn-op">×</button>
+
+          <button onClick={() => handlePress('4')} className="btn btn-num">4</button>
+          <button onClick={() => handlePress('5')} className="btn btn-num">5</button>
+          <button onClick={() => handlePress('6')} className="btn btn-num">6</button>
+          <button onClick={() => handlePress('-')} className="btn btn-op">-</button>
+
+          <button onClick={() => handlePress('1')} className="btn btn-num">1</button>
+          <button onClick={() => handlePress('2')} className="btn btn-num">2</button>
+          <button onClick={() => handlePress('3')} className="btn btn-num">3</button>
+          <button onClick={() => handlePress('+')} className="btn btn-op">+</button>
+
+          <button onClick={() => handlePress('0')} className="btn btn-num">0</button>
+          <button onClick={() => handlePress('.')} className="btn btn-num">.</button>
+          <button onClick={handleDelete} className="btn btn-util">⌫</button>
+          <button onClick={handleEqual} className="btn btn-eq">=</button>
+        </div>
       </div>
     </div>
   );
 }
 """
-                css_code = """.calc-container { background: #0f172a; color: #fff; padding: 2rem; border-radius: 12px; max-width: 400px; margin: 0 auto; text-align: center; font-family: sans-serif; }
-.calc-screen { background: #1e293b; padding: 1rem; border-radius: 8px; font-size: 2rem; text-align: right; margin-bottom: 1rem; border: 1px solid #334155; }
-.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
-.btn { background: #334155; color: #fff; border: none; padding: 1rem; font-size: 1.25rem; border-radius: 6px; cursor: pointer; }
-.btn.op { background: #0284c7; }
-.btn.eq { background: #10b981; grid-column: span 2; }
-.btn.clear { background: #ef4444; }
+                css_code = """.calc-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.calc-container {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+}
+
+.calc-header {
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.calc-header h2 {
+  color: #f8fafc;
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+}
+
+.calc-badge {
+  font-size: 0.75rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.calc-screen-box {
+  background: #090d16;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  text-align: right;
+}
+
+.calc-expression {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  min-height: 1.2rem;
+}
+
+.calc-screen {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.btn {
+  height: 54px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-num {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+}
+
+.btn-num:hover {
+  background: #334155;
+}
+
+.btn-op {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.btn-op:hover {
+  background: #0369a1;
+}
+
+.btn-util {
+  background: #475569;
+  color: #f8fafc;
+}
+
+.btn-util:hover {
+  background: #64748b;
+}
+
+.btn-clear {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-clear:hover {
+  background: #dc2626;
+}
+
+.btn-eq {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+}
+
+.btn-eq:hover {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
 """
                 test_code = """import { render, screen } from '@testing-library/react';
 import App from './App';

@@ -514,24 +514,35 @@
         sandboxEl.innerHTML = `
           <h2 style="margin-bottom:1rem; color:#38bdf8; font-size:1.2rem">📱 Live UI Sandbox: ${title}</h2>
           <div class="sandbox-box">
-            <div class="calc-screen" id="calcDisplay">0</div>
+            <div style="background:#090d16; border:1px solid #334155; border-radius:12px; padding:0.75rem 1rem; margin-bottom:1rem; text-align:right">
+              <div id="calcExpr" style="font-size:0.8rem; color:#94a3b8; min-height:1rem"></div>
+              <div class="calc-screen" id="calcDisplay" style="margin-bottom:0; border:none; padding:0; background:transparent">0</div>
+            </div>
             <div class="calc-grid">
               <button class="calc-btn clear" onclick="calcClear()">C</button>
-              <button class="calc-btn op" onclick="calcPress('/')">/</button>
-              <button class="calc-btn op" onclick="calcPress('*')">×</button>
-              <button class="calc-btn op" onclick="calcPress('-')">-</button>
+              <button class="calc-btn op" onclick="calcPress('(')">(</button>
+              <button class="calc-btn op" onclick="calcPress(')')">)</button>
+              <button class="calc-btn op" onclick="calcPress('/')">÷</button>
+
               <button class="calc-btn" onclick="calcPress('7')">7</button>
               <button class="calc-btn" onclick="calcPress('8')">8</button>
               <button class="calc-btn" onclick="calcPress('9')">9</button>
-              <button class="calc-btn op" onclick="calcPress('+')">+</button>
+              <button class="calc-btn op" onclick="calcPress('*')">×</button>
+
               <button class="calc-btn" onclick="calcPress('4')">4</button>
               <button class="calc-btn" onclick="calcPress('5')">5</button>
               <button class="calc-btn" onclick="calcPress('6')">6</button>
-              <button class="calc-btn eq" onclick="calcEval()">=</button>
+              <button class="calc-btn op" onclick="calcPress('-')">-</button>
+
               <button class="calc-btn" onclick="calcPress('1')">1</button>
               <button class="calc-btn" onclick="calcPress('2')">2</button>
               <button class="calc-btn" onclick="calcPress('3')">3</button>
+              <button class="calc-btn op" onclick="calcPress('+')">+</button>
+
               <button class="calc-btn" onclick="calcPress('0')">0</button>
+              <button class="calc-btn" onclick="calcPress('.')">.</button>
+              <button class="calc-btn op" onclick="calcDel()">⌫</button>
+              <button class="calc-btn eq" style="grid-column:auto" onclick="calcEval()">=</button>
             </div>
           </div>
         `;
@@ -559,6 +570,36 @@
       li.innerHTML = `<span>${input.value.trim()}</span><button onclick="this.parentElement.remove()" style="background:#ef4444; color:#fff; border:none; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.8rem; cursor:pointer">Delete</button>`;
       list.appendChild(li);
       input.value = '';
+    }
+
+    function calcClear() {
+      const d = document.getElementById('calcDisplay');
+      const e = document.getElementById('calcExpr');
+      if (d) d.innerText = '0';
+      if (e) e.innerText = '';
+    }
+    function calcDel() {
+      const d = document.getElementById('calcDisplay');
+      if (!d) return;
+      if (d.innerText.length > 1) d.innerText = d.innerText.slice(0, -1);
+      else d.innerText = '0';
+    }
+    function calcPress(val) {
+      const d = document.getElementById('calcDisplay');
+      if (!d) return;
+      if (d.innerText === '0' && val !== '.') d.innerText = val;
+      else d.innerText += val;
+    }
+    function calcEval() {
+      const d = document.getElementById('calcDisplay');
+      const e = document.getElementById('calcExpr');
+      if (!d) return;
+      try {
+        if (e) e.innerText = d.innerText + ' =';
+        d.innerText = String(Function('"use strict";return (' + d.innerText + ')')());
+      } catch (err) {
+        d.innerText = 'Error';
+      }
     }
   </script>
 </body>

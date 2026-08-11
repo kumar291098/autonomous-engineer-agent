@@ -137,14 +137,18 @@ Requirements:
 - Comprehensive JUnit 5 + Mockito unit/integration test classes (@SpringBootTest, @WebMvcTest, @MockBean).
 """
 
-REACT_UI_GENERATOR_PROMPT = """Write modern, responsive React UI components, CSS styles, API integration client, and component test cases for the feature:
+REACT_UI_GENERATOR_PROMPT = """Write modern, ultra-responsive React UI components, CSS styles, API integration client, and component test cases for the feature:
 "{feature_requirement}"
 
 Requirements:
 - package.json with react, react-dom, lucide-react / CSS styles.
 - Main App component and subcomponents with dynamic state management.
 - API service utility to interact with Java Spring Boot REST endpoints.
-- Clean CSS styling (responsive layout, modern design system).
+- STUNNING DESIGN AESTHETICS & UI ALIGNMENT:
+  * Glassmorphism dark mode palette (gradients, backdrop-filter blur, subtle glow borders).
+  * Perfect CSS Grid & Flexbox alignment (zero overlapping elements, consistent 0.75rem gap spacing, centered layouts).
+  * Interactive micro-animations (smooth hover transitions `transform: translateY(-2px)`, active press scale, focus rings).
+  * High-contrast typography (Inter/Roboto sans-serif, clear digital displays, aligned status badges).
 - Component test files testing UI interactions and render states.
 """
 
