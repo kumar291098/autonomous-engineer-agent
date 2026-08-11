@@ -70,8 +70,12 @@ class FullStackOrchestrator:
         react_paths = self.frontend_scaffolder.scaffold(frontend)
         print(f"   [OK] Generated {len(react_paths)} frontend files (package.json, JSX components, CSS, React tests).")
 
-        # STEP 4: Test Suite Validation
-        print("\n[STEP 4] Running Test Suite Validation Gate...")
+        # STEP 4: Generate Standalone Application Metadata (README.md & docker-compose.yml)
+        print("\n[STEP 4] Generating Standalone Application Metadata...")
+        self._generate_standalone_metadata(spec)
+
+        # STEP 5: Test Suite Validation
+        print("\n[STEP 5] Running Test Suite Validation Gate...")
         sb_code, sb_log = self.backend_scaffolder.run_tests()
         react_code, react_log = self.frontend_scaffolder.run_tests()
 
@@ -82,12 +86,14 @@ class FullStackOrchestrator:
         )
 
         print("\n[SUCCESS] Full-Stack Application Generated Successfully!")
-        print(f"   Backend Target: {self.backend_scaffolder.target_dir}")
-        print(f"   Frontend Target: {self.frontend_scaffolder.target_dir}")
+        print(f"   Standalone Root Directory: {self.target_dir}")
+        print(f"   Backend Path: {self.backend_scaffolder.target_dir}")
+        print(f"   Frontend Path: {self.frontend_scaffolder.target_dir}")
 
         return {
             "status": "SUCCESS",
             "feature_title": spec.feature_title,
+            "target_dir": str(self.target_dir),
             "backend_path": str(self.backend_scaffolder.target_dir),
             "frontend_path": str(self.frontend_scaffolder.target_dir),
             "backend_files_count": len(sb_paths),
@@ -96,3 +102,92 @@ class FullStackOrchestrator:
             "frontend_test_log": react_log,
             "bundle": bundle,
         }
+
+    def _generate_standalone_metadata(self, spec: FeatureSpecification):
+        """Generates standalone README.md and docker-compose.yml for the generated application."""
+        # 1. Standalone README.md
+        readme_path = self.target_dir / "README.md"
+        readme_content = f"""# 🚀 {spec.feature_title}
+
+{spec.summary}
+
+This is a **standalone, fully decoupled Full-Stack Application** generated independently of the AI Agent.
+
+---
+
+## 🏗️ Project Architecture
+
+* **Backend (`/backend`)**: Java Spring Boot 3 REST API (Maven, JPA, H2/PostgreSQL)
+* **Frontend (`/frontend`)**: Modern React UI (NPM, JSX/TSX, CSS, API Client)
+
+---
+
+## ⚡ Quick Start & How to Run
+
+### 1. Run Java Spring Boot Backend
+```bash
+cd backend
+mvn spring-boot:run
+```
+Backend runs at `http://localhost:8080` (H2 Console: `http://localhost:8080/h2-console`)
+
+### 2. Run React UI Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+Frontend runs at `http://localhost:3000`
+
+### 3. Run Backend & Frontend Tests
+```bash
+# Backend JUnit 5 tests
+cd backend && mvn test
+
+# Frontend React tests
+cd frontend && npm test
+```
+
+---
+
+## 🐳 Docker Deployment
+Run backend and frontend containers together:
+```bash
+docker-compose up --build
+```
+"""
+        readme_path.write_text(readme_content, encoding="utf-8")
+
+        # 2. Standalone docker-compose.yml
+        compose_path = self.target_dir / "docker-compose.yml"
+        compose_content = f"""version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+"""
+        compose_path.write_text(compose_content, encoding="utf-8")
+
+    def export_as_zip(self, zip_destination: str) -> str:
+        """Packages the standalone application directory into a clean .zip archive."""
+        import shutil
+        zip_path = Path(zip_destination).resolve()
+        archive_base = zip_path.with_suffix("")
+        output_filename = shutil.make_archive(
+            base_name=str(archive_base),
+            format="zip",
+            root_dir=str(self.target_dir),
+        )
+        return output_filename
+
