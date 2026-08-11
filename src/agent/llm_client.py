@@ -36,7 +36,7 @@ class LLMClient:
             return self._generate_mock_output(prompt, schema_cls)
 
     def _call_gemini(self, prompt: str, schema_cls: Type[T]) -> T:
-        """Uses google-genai library if installed."""
+        """Queries Gemini API using google-genai SDK or native urllib REST API."""
         try:
             from google import genai
             from google.genai import types
@@ -51,13 +51,40 @@ class LLMClient:
                 ),
             )
             return schema_cls.model_validate_json(response.text)
-        except ImportError:
-            # Fallback if library not available
-            raw_text = self._call_generic_completion(prompt)
+        except Exception:
+            # Native urllib REST API fallback for zero dependency execution
+            return self._call_gemini_rest_api(prompt, schema_cls)
+
+    def _call_gemini_rest_api(self, prompt: str, schema_cls: Type[T]) -> T:
+        """Native urllib REST API client for Google Gemini."""
+        import urllib.request
+        import json
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+        headers = {"Content-Type": "application/json"}
+        
+        schema_json = json.dumps(schema_cls.model_json_schema())
+        full_prompt = (
+            f"You are a Senior Engineer AI Agent. Return strictly a JSON object matching this schema: {schema_json}\n\n"
+            f"USER PROMPT:\n{prompt}"
+        )
+        
+        payload = {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {
+                "response_mime_type": "application/json",
+                "temperature": 0.2
+            }
+        }
+        
+        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+            raw_text = resp_data["candidates"][0]["content"]["parts"][0]["text"]
             return self.extract_json_schema(raw_text, schema_cls)
 
     def _call_openai(self, prompt: str, schema_cls: Type[T]) -> T:
-        """Uses OpenAI structured outputs parser."""
+        """Uses OpenAI structured outputs parser or native urllib REST API."""
         try:
             import openai
             client = openai.OpenAI(api_key=self.api_key)
@@ -68,7 +95,36 @@ class LLMClient:
             )
             return completion.choices[0].message.parsed
         except Exception:
-            raw_text = self._call_generic_completion(prompt)
+            return self._call_openai_rest_api(prompt, schema_cls)
+
+    def _call_openai_rest_api(self, prompt: str, schema_cls: Type[T]) -> T:
+        """Native urllib REST API client for OpenAI."""
+        import urllib.request
+        import json
+
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        
+        schema_json = json.dumps(schema_cls.model_json_schema())
+        system_msg = f"You are a Senior Engineer AI Agent. Return strictly a valid JSON object matching this schema: {schema_json}"
+        
+        payload = {
+            "model": "gpt-4o",
+            "messages": [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": prompt}
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.2
+        }
+        
+        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            resp_data = json.loads(resp.read().decode("utf-8"))
+            raw_text = resp_data["choices"][0]["message"]["content"]
             return self.extract_json_schema(raw_text, schema_cls)
 
     def _call_generic_completion(self, prompt: str) -> str:
