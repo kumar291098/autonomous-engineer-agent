@@ -130,6 +130,13 @@ class FullStackOrchestrator:
             frontend=frontend,
         )
 
+        # STEP 7: Documentation Agent (Generate Multi-Agent Docs)
+        emit("step", "\n[STEP 6] Running Documentation Agent (Generating Architectural & System Docs)...")
+        from src.agent.doc_agent import DocumentationAgent
+        doc_agent = DocumentationAgent(self.target_dir)
+        docs = doc_agent.generate_all_docs(bundle)
+        emit("log", f"   [OK] Generated {len(docs)} markdown documentation guides under ./docs/")
+
         print("\n[SUCCESS] Full-Stack Application Generated Successfully!")
         print(f"   Standalone Root Directory: {self.target_dir}")
         print(f"   Backend Path: {self.backend_scaffolder.target_dir}")
