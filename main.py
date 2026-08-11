@@ -82,9 +82,18 @@ def main():
 
         if choice == "1":
             args.mode = "fullstack"
-            user_prompt = input("\n💬 Enter your application requirement / prompt:\n> ").strip()
-            if user_prompt:
-                args.feature = user_prompt
+            print("\n💬 Enter your application requirement / prompt (paste multi-line text, then press Enter twice):")
+            lines = []
+            while True:
+                line = input("> " if not lines else "... ").strip()
+                if not line and lines:
+                    break
+                if line.upper() == "DONE":
+                    break
+                if line:
+                    lines.append(line)
+            if lines:
+                args.feature = "\n".join(lines)
             args.repo = input("\nEnter output project directory (default: ./output_app): ").strip() or "./output_app"
             want_zip = input("Export as Zip archive? (y/n, default n): ").strip().lower()
             if want_zip == "y":
