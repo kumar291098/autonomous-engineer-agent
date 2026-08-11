@@ -90,6 +90,8 @@ class FullStackOrchestrator:
         print(f"   Backend Path: {self.backend_scaffolder.target_dir}")
         print(f"   Frontend Path: {self.frontend_scaffolder.target_dir}")
 
+        self._print_generated_files_tree(sb_paths + react_paths)
+
         return {
             "status": "SUCCESS",
             "feature_title": spec.feature_title,
@@ -102,6 +104,18 @@ class FullStackOrchestrator:
             "frontend_test_log": react_log,
             "bundle": bundle,
         }
+
+    def _print_generated_files_tree(self, all_paths: list):
+        """Prints formatted list of all generated files."""
+        print("\n📁 GENERATED FILE TREE & ARTIFACTS:")
+        print("-------------------------------------------------------")
+        for p in all_paths:
+            try:
+                rel = p.relative_to(self.target_dir)
+                size_kb = round(p.stat().st_size / 1024, 2)
+                print(f"   📄 {rel} ({size_kb} KB)")
+            except Exception:
+        print("-------------------------------------------------------")
 
     def _generate_standalone_metadata(self, spec: FeatureSpecification):
         """Generates standalone README.md and docker-compose.yml for the generated application."""

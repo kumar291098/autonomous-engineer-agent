@@ -34,7 +34,34 @@ def main():
         print("\n=======================================================")
         print("🤖 Interactive Senior Engineer Agent Prompt Mode")
         print("=======================================================")
-        print("Select Mode:")
+        print("Select AI Provider:")
+        print("  1. Google Gemini AI (Recommended - Real LLM)")
+        print("  2. OpenAI (GPT-4o - Real LLM)")
+        print("  3. Offline Mock Demo Mode")
+        prov_choice = input("Enter choice (1, 2, or 3, default 1): ").strip() or "1"
+
+        if prov_choice == "1":
+            args.provider = "gemini"
+            if not os.getenv("GEMINI_API_KEY"):
+                key = input("Enter your GEMINI_API_KEY (press Enter to run mock demo): ").strip()
+                if key:
+                    os.environ["GEMINI_API_KEY"] = key
+                else:
+                    print("⚠️ No API Key entered. Running in Mock Demo mode.")
+                    args.provider = "mock"
+        elif prov_choice == "2":
+            args.provider = "openai"
+            if not os.getenv("OPENAI_API_KEY"):
+                key = input("Enter your OPENAI_API_KEY (press Enter to run mock demo): ").strip()
+                if key:
+                    os.environ["OPENAI_API_KEY"] = key
+                else:
+                    print("⚠️ No API Key entered. Running in Mock Demo mode.")
+                    args.provider = "mock"
+        else:
+            args.provider = "mock"
+
+        print("\nSelect Operating Mode:")
         print("  1. Full-Stack App Generator (React UI + Java Spring Boot + Tests)")
         print("  2. Autonomous Bug Resolution Pipeline")
         choice = input("Enter choice (1 or 2, default 1): ").strip() or "1"
